@@ -247,7 +247,7 @@ def show_start_screen():
         pygame.display.flip()
         clock.tick(60)
 
-def show_death_screen(score):
+def show_death_screen(score, won=False):
     retry_button = Button(SCREEN_WIDTH//2 - 100, SCREEN_HEIGHT//2, 200, 50, "TEKRAR OYNA", BLUE)
     quit_button = Button(SCREEN_WIDTH//2 - 100, SCREEN_HEIGHT//2 + 100, 200, 50, "ÇIKIŞ", RED)
     
@@ -263,8 +263,11 @@ def show_death_screen(score):
 
         screen.fill(BLACK)
         
-        # Oyun Bitti yazısı
-        game_over_text = title_font.render("OYUN BİTTİ!", True, RED)
+        # Oyun Bitti / Kazandın yazısı
+        if won:
+            game_over_text = title_font.render("KAZANDIN!", True, GREEN)
+        else:
+            game_over_text = title_font.render("OYUN BİTTİ!", True, RED)
         game_over_rect = game_over_text.get_rect(center=(SCREEN_WIDTH//2, SCREEN_HEIGHT//4 - 50))
         screen.blit(game_over_text, game_over_rect)
         
@@ -567,12 +570,12 @@ def game_loop(level_number=0, total_score=0):
         # Event kontrolü
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                return False
+                return {'status': 'quit', 'score': total_score + player.score}
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE:
                     player.jump()
                 elif event.key == pygame.K_ESCAPE:
-                    return True
+                    return {'status': 'menu', 'score': total_score + player.score}
 
         # Tuş kontrolü
         keys = pygame.key.get_pressed()
@@ -670,32 +673,33 @@ def game_loop(level_number=0, total_score=0):
     return {'status': 'quit', 'score': total_score + player.score}
 
 # Ana oyun döngüsü güncelleme
-while True:
-    if show_start_screen():
-        current_level = 0
-        total_score = 0
-        
-        while current_level < len(LEVELS):
-            if not show_level_screen(current_level, total_score):
-                break
-                
-            result = game_loop(current_level, total_score)
-            
-            if result['status'] == 'completed':
-                total_score += result['score']
-                current_level += 1
-                if current_level >= len(LEVELS):
-                    # Oyun başarıyla tamamlandı
-                    if not show_death_screen(total_score):
-                        break
-            elif result['status'] == 'dead':
-                if not show_death_screen(result['score']):
-                    break
-                break
-            else:  # quit
-                break
-    else:
-        break
+playing = show_start_screen()
+while playing:
+    current_level = 0
+    total_score = 0
+
+    while current_level < len(LEVELS):
+        if not show_level_screen(current_level, total_score):
+            playing = False
+            break
+
+        result = game_loop(current_level, total_score)
+
+        if result['status'] == 'completed':
+            total_score += result['score']
+            current_level += 1
+            if current_level >= len(LEVELS):
+                # Oyun başarıyla tamamlandı
+                playing = show_death_screen(total_score, won=True)
+        elif result['status'] == 'dead':
+            playing = show_death_screen(result['score'])  # TEKRAR OYNA: baştan başla
+            break
+        elif result['status'] == 'menu':  # ESC: ana menüye dön
+            playing = show_start_screen()
+            break
+        else:  # quit
+            playing = False
+            break
 
 pygame.quit()
 sys.exit() 
