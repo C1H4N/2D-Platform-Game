@@ -293,6 +293,7 @@ class Player(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.x = 50
         self.rect.y = SCREEN_HEIGHT - 100
+        self.prev_bottom = self.rect.bottom
         self.velocity_y = 0
         self.jumping = False
         self.speed = 5
@@ -307,6 +308,7 @@ class Player(pygame.sprite.Sprite):
     def update(self):
         # Yerçekimi
         self.velocity_y += 0.8
+        self.prev_bottom = self.rect.bottom  # Önceki karedeki ayak konumu
         self.rect.y += self.velocity_y
 
         # Ekran sınırları
@@ -354,7 +356,7 @@ class Player(pygame.sprite.Sprite):
 
     def jump(self):
         if not self.jumping:
-            self.velocity_y = -15
+            self.velocity_y = -17
             self.jumping = True
             jump_sound.play()  # Zıplama sesi
         
@@ -362,7 +364,6 @@ class Player(pygame.sprite.Sprite):
         if not self.invulnerable:
             self.health -= 1
             self.invulnerable = True
-            self.image.fill(GRAY)
             
             if self.health <= 0:
                 death_sound.play()  # Ölüm sesi
@@ -443,11 +444,11 @@ LEVELS = [
             {'x': 0, 'y': SCREEN_HEIGHT - 50, 'width': SCREEN_WIDTH, 'height': 50},  # Zemin
             {'x': 300, 'y': 400, 'width': 200, 'height': 20},
             {'x': 100, 'y': 300, 'width': 200, 'height': 20},
-            {'x': 500, 'y': 200, 'width': 200, 'height': 20},
+            {'x': 500, 'y': 250, 'width': 200, 'height': 20},
         ],
         'coins': [
-            (350, 350), (150, 250), (550, 150),
-            (400, 350), (200, 250), (600, 150),
+            (350, 350), (150, 250), (550, 200),
+            (400, 350), (200, 250), (600, 200),
         ],
         'enemy_speed': 2,
         'player_health': 3
@@ -588,11 +589,15 @@ def game_loop(level_number=0, total_score=0):
         player.rect.y += 1
         hits = pygame.sprite.spritecollide(player, platforms, False)
         player.rect.y -= 1
+        # Sadece önceki karede ayakları platformun üstünde olduysa platforma inilir
+        hits = [platform for platform in hits if player.prev_bottom <= platform.rect.top]
 
         if hits and player.velocity_y >= 0:
             player.rect.bottom = hits[0].rect.top
             player.velocity_y = 0
             player.jumping = False
+        else:
+            player.jumping = True  # Havada (platformdan düşerken de) zıplanamaz
 
         # Altın toplama kontrolü
         coin_hits = pygame.sprite.spritecollide(player, coins, True)
@@ -640,6 +645,14 @@ def game_loop(level_number=0, total_score=0):
                     )
                     all_sprites.add(particle)
                     particles.add(particle)
+                # Parçacıkların görünmesi için kısa ölüm animasyonu
+                player.kill()
+                for _ in range(40):
+                    particles.update()
+                    screen.blit(background, (0, 0))
+                    all_sprites.draw(screen)
+                    pygame.display.flip()
+                    clock.tick(60)
                 return {'status': 'dead', 'score': total_score + player.score}
 
         # Güncelleme
