@@ -8,7 +8,10 @@ import struct
 
 # Pygame başlatma
 pygame.init()
-pygame.mixer.init()  # Ses sistemi başlatma
+try:
+    pygame.mixer.init()  # Ses sistemi başlatma
+except pygame.error:
+    print("Ses cihazı bulunamadı, oyun sessiz çalışacak.")
 
 # FPS ayarı için clock
 clock = pygame.time.Clock()
@@ -19,11 +22,12 @@ SCREEN_HEIGHT = 600
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 pygame.display.set_caption("2D Platform Oyunu")
 
-# Asset klasörü oluşturma
-if not os.path.exists('assets'):
-    os.makedirs('assets')
-if not os.path.exists('assets/sounds'):
-    os.makedirs('assets/sounds')
+# Asset klasörü oluşturma (çalışma dizininden bağımsız, main.py'nin yanında)
+SOUND_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'assets', 'sounds')
+os.makedirs(SOUND_DIR, exist_ok=True)
+
+def sound_path(name):
+    return os.path.join(SOUND_DIR, name)
 
 # Ses dosyalarını oluşturma
 def create_wav(filename, frequency, duration):
@@ -46,20 +50,33 @@ def create_wav(filename, frequency, duration):
     wav_file.close()
 
 # Ses dosyaları
-if not os.path.exists('assets/sounds/jump.wav'):
-    create_wav('assets/sounds/jump.wav', 440, 0.1)  # Zıplama: orta ton, kısa
-if not os.path.exists('assets/sounds/coin.wav'):
-    create_wav('assets/sounds/coin.wav', 880, 0.07)  # Altın: yüksek ton, çok kısa
-if not os.path.exists('assets/sounds/hit.wav'):
-    create_wav('assets/sounds/hit.wav', 220, 0.2)  # Hasar: düşük ton, orta
-if not os.path.exists('assets/sounds/death.wav'):
-    create_wav('assets/sounds/death.wav', 110, 0.4)  # Ölüm: çok düşük ton, uzun
+if not os.path.exists(sound_path('jump.wav')):
+    create_wav(sound_path('jump.wav'), 440, 0.1)  # Zıplama: orta ton, kısa
+if not os.path.exists(sound_path('coin.wav')):
+    create_wav(sound_path('coin.wav'), 880, 0.07)  # Altın: yüksek ton, çok kısa
+if not os.path.exists(sound_path('hit.wav')):
+    create_wav(sound_path('hit.wav'), 220, 0.2)  # Hasar: düşük ton, orta
+if not os.path.exists(sound_path('death.wav')):
+    create_wav(sound_path('death.wav'), 110, 0.4)  # Ölüm: çok düşük ton, uzun
+
+# Ses cihazı yoksa kullanılan sessiz ses nesnesi
+class SilentSound:
+    def play(self):
+        pass
+
+    def set_volume(self, volume):
+        pass
+
+def load_sound(name):
+    if pygame.mixer.get_init():
+        return pygame.mixer.Sound(sound_path(name))
+    return SilentSound()
 
 # Ses efektleri
-jump_sound = pygame.mixer.Sound('assets/sounds/jump.wav')
-coin_sound = pygame.mixer.Sound('assets/sounds/coin.wav')
-hit_sound = pygame.mixer.Sound('assets/sounds/hit.wav')
-death_sound = pygame.mixer.Sound('assets/sounds/death.wav')
+jump_sound = load_sound('jump.wav')
+coin_sound = load_sound('coin.wav')
+hit_sound = load_sound('hit.wav')
+death_sound = load_sound('death.wav')
 
 # Ses ayarları
 jump_sound.set_volume(0.3)
