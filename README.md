@@ -16,8 +16,8 @@ Pygame ile geliştirilmiş, üç seviyeli bir platform oyunu. Her seviyede artan
 ### Görsel Özellikler
 - Animasyonlu karakter (koşma, zıplama)
 - Dönen ve parlayan altınlar
-- Parçacık efektleri (altın toplama, hasar alma)
-- Paralaks arka plan (bulutlar ve dağlar)
+- Parçacık efektleri (altın toplama, ölüm)
+- Bulutlu ve dağlı arka plan
 - Modern arayüz tasarımı
 
 ### Ses Efektleri
@@ -28,7 +28,7 @@ Pygame ile geliştirilmiş, üç seviyeli bir platform oyunu. Her seviyede artan
 
 ## Kurulum
 
-1. Python'u yükleyin (3.11 veya üstü önerilir)
+1. Python'u yükleyin (3.8 – 3.13 arası; pygame 2.6 bu sürümleri destekler)
 2. Gerekli paketleri yükleyin:
 ```bash
 pip install -r requirements.txt
@@ -42,7 +42,8 @@ python main.py
 ## Kontroller
 - **Sağ/Sol Ok Tuşları**: Hareket
 - **Boşluk**: Zıplama
-- **ESC**: Oyundan çıkış / Menüye dönüş
+- **ESC**: Ana menüye dönüş
+- **Fare**: Menü butonları
 
 ## Seviyeler
 
